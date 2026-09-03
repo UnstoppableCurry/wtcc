@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>限制与证据边界 — wtcc</title>
+    <meta
+      name="description"
+      content="wtcc 的已知限制：未实现的登录、空 registry 自动路由、不完整 i18n、Windows 未测、截图品牌、上游版权与实验 flag。"
+    />
+    <link
+      rel="canonical"
+      href="https://unstoppablecurry.github.io/wtcc/limitations.html"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="限制与证据边界 — wtcc" />
+    <meta
+      property="og:description"
+      content="只列出 README、TODO、CONTRIBUTING 与源码已写明的缺口。"
+    />
+    <meta
+      property="og:url"
+      content="https://unstoppablecurry.github.io/wtcc/limitations.html"
+    />
+    <meta
+      property="og:image"
+      content="https://unstoppablecurry.github.io/wtcc/assets/screenshot.png"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">wtcc <small>文档</small></a>
+        <button
+          class="nav-toggle"
+          type="button"
+          data-nav-toggle
+          aria-controls="site-nav"
+          aria-expanded="false"
+        >
+          菜单
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="站点">
+          <a href="./">目的</a>
+          <a href="compatibility.html">兼容性</a>
+          <a href="install.html">安装使用</a>
+          <a href="architecture.html">架构</a>
+          <a href="limitations.html" aria-current="page">限制</a>
+          <a class="ext" href="https://github.com/UnstoppableCurry/wtcc">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <p class="crumbs"><a href="./">文档</a> / 限制</p>
+        <h1>限制与证据边界</h1>
+        <p class="lede">
+          这份清单用来防止把 fork 写成「官方 Claude Code
+          替代品」或「全厂商 SDK」。条目都能在仓库里找到出处。
+        </p>
+
+        <div class="note note-danger">
+          <p>
+            本站不提供用户数、性能基准、采用率和 SLA。npm shield
+            或 GitHub star 徽章若出现在 README，也不在这里解读为社区规模。
+          </p>
+        </div>
+
+        <h2 id="product">产品形态</h2>
+        <ul class="plain">
+          <li>没有浏览器应用、没有托管 Web REPL。</li>
+          <li>
+            已验证截图是 <code>cli-dev</code> 终端画面，品牌仍是 Free Code /
+            Claude Code，不能当当前 wtcc 中文 UI 的宣传图。
+          </li>
+          <li>
+            原生 Windows 未测试（<code>CONTRIBUTING.md</code>）。PowerShell
+            安装 Bun 的说明来自 README，不表示完整 Windows 支持。
+          </li>
+        </ul>
+
+        <h2 id="providers">Provider 与登录</h2>
+        <ul class="plain">
+          <li>
+            没有第一方 Gemini / DeepSeek / Moonshot / Z.AI / Qwen / MiniMax
+            SDK。这些名字只出现在 id 推断与价格表。
+          </li>
+          <li>OpenAI OAuth（ChatGPT / Codex 订阅登录）未实现。</li>
+          <li>ccswitch 登录未实现。</li>
+          <li>没有「粘贴 key + 选协议」的 Ink 对话框。</li>
+          <li>
+            自动分档没有 registry anchor：可靠做法是显式
+            <code>--model</code> 或 <code>/model</code>。
+          </li>
+          <li>
+            relay 是否接受某个 id，以对方 <code>/v1/models</code> 与实际
+            4xx/5xx 为准，本仓库不背书可用性。
+          </li>
+        </ul>
+
+        <h2 id="i18n-gaps">中文化未完成</h2>
+        <p>
+          378 个 key 覆盖 command / permissions / model picker / welcome /
+          部分 error。TODO 仍列出：
+        </p>
+        <ul class="plain">
+          <li><code>REPL.tsx</code> 散落的英文字面量</li>
+          <li>Bash / PowerShell 选择项</li>
+          <li>状态栏与调试输出</li>
+        </ul>
+
+        <h2 id="upstream">上游与许可证</h2>
+        <ul class="plain">
+          <li>
+            项目 fork 自公开可检查的 Claude Code / free-code 谱系。LICENSE
+            写明：ISC 覆盖 wtcc 修改与组装分发；上游代码权利仍属原作者；无担保。
+          </li>
+          <li>
+            <code>FEATURES.md</code> 记录大量实验 flag：有的能 bundle、有的缺文件、有的运行时要
+            OAuth 或原生模块。默认 <code>bun run build</code> 不等于「全部实验可用」。
+          </li>
+          <li>
+            <code>VOICE_MODE</code> 在默认构建里，但仍要 claude.ai OAuth 加本地录音（或
+            SoX）。
+          </li>
+          <li>
+            GrowthBook / OTel 包仍在 <code>package.json</code>。产品
+            <code>logEvent</code> 被 stub，不等于依赖树已删干净。
+          </li>
+        </ul>
+
+        <h2 id="ops">安装与发布边角</h2>
+        <ul class="plain">
+          <li>
+            <code>install.sh</code> 仍指向 upstream free-code，不能当 wtcc
+            安装器。
+          </li>
+          <li>
+            TODO：<code>bun --compile</code> 会因
+            <code>@azure/identity</code> 动态 import 找不到模块；当前发版路径是
+            ship TypeScript + 要求用户本机有 Bun。
+          </li>
+          <li>
+            <code>/update</code> 打印 <code>npm i -g wtcc</code>，与包名
+            <code>@unstoppablecurry/wtcc</code> 不一致。
+          </li>
+          <li>
+            <code>WTCC_OPENAI_FAST</code> 已能注入
+            <code>service_tier</code>，但未在真实 ChatGPT 订阅请求上验证。
+          </li>
+        </ul>
+
+        <h2 id="compare">和官方 Claude Code 比什么、不比什么</h2>
+        <p>
+          README 对比表描述的是本 fork 的增量（中文、多协议、动态菜单、per-model
+          effort、adapter 自愈、telemetry stub、开源）。它不是评测分数，也不证明官方产品「不能」做某事。官方行为以
+          Anthropic 文档为准。
+        </p>
+
+        <h2 id="contrib">反馈</h2>
+        <p>
+          路线图见仓库 <a href="https://github.com/UnstoppableCurry/wtcc/blob/main/TODO.md">TODO.md</a>。贡献约定见
+          <a href="https://github.com/UnstoppableCurry/wtcc/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>。安全问题不要开公开
+          issue。
+        </p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p><a href="./">返回首页</a> · <a href="compatibility.html">兼容性</a></p>
+        <p class="fine">https://unstoppablecurry.github.io/wtcc/</p>
+      </div>
+    </footer>
+    <script src="site.js" defer></script>
+  </body>
+</html>
