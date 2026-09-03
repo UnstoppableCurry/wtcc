@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Provider 兼容性 — wtcc</title>
+    <meta
+      name="description"
+      content="wtcc 只有 anthropic 与 openai 两条协议路径。Gemini、DeepSeek、Kimi、GLM、Qwen 等 id 走 OpenAI 兼容 relay 的模式推断与计价，不是官方 SDK。"
+    />
+    <link
+      rel="canonical"
+      href="https://unstoppablecurry.github.io/wtcc/compatibility.html"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="Provider 兼容性 — wtcc" />
+    <meta
+      property="og:description"
+      content="只陈述源码里的协议路径、relay 探测和 model id 推断。"
+    />
+    <meta
+      property="og:url"
+      content="https://unstoppablecurry.github.io/wtcc/compatibility.html"
+    />
+    <meta
+      property="og:image"
+      content="https://unstoppablecurry.github.io/wtcc/assets/screenshot.png"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">wtcc <small>文档</small></a>
+        <button
+          class="nav-toggle"
+          type="button"
+          data-nav-toggle
+          aria-controls="site-nav"
+          aria-expanded="false"
+        >
+          菜单
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="站点">
+          <a href="./">目的</a>
+          <a href="compatibility.html" aria-current="page">兼容性</a>
+          <a href="install.html">安装使用</a>
+          <a href="architecture.html">架构</a>
+          <a href="limitations.html">限制</a>
+          <a class="ext" href="https://github.com/UnstoppableCurry/wtcc">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <p class="crumbs"><a href="./">文档</a> / 兼容性</p>
+        <h1>Provider 兼容性</h1>
+        <p class="lede">
+          类型 <code>ModelProvider</code> 只有
+          <code>'anthropic' | 'openai'</code>。其它厂商名字出现在 id
+          模式推断、定价表和 README 举例里，不代表本仓库实现了对应官方客户端。
+        </p>
+
+        <div class="note note-ok">
+          <p>
+            权威来源：<code>src/routing/registry.ts</code>、<code>src/services/api/relayModels.ts</code>、<code>src/services/api/adapter/normalize.ts</code>、<code>TODO.md</code>。
+          </p>
+        </div>
+
+        <h2 id="paths">两条请求路径</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>路径</th>
+                <th>如何打开</th>
+                <th>源码行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anthropic 协议</td>
+                <td>
+                  默认；或自备 <code>ANTHROPIC_API_KEY</code>。也可把
+                  <code>ANTHROPIC_BASE_URL</code> 指到 relay 的 Anthropic 入口。
+                </td>
+                <td>
+                  <code>/login</code> 走 <code>ConsoleOAuthFlow</code>（Anthropic
+                  OAuth）。凭证目录按上游惯例写到 <code>~/.claude/</code>。
+                </td>
+              </tr>
+              <tr>
+                <td>OpenAI 兼容协议</td>
+                <td>
+                  <code>CLAUDE_CODE_USE_OPENAI=1</code>，并设置
+                  <code>OPENAI_BASE_URL</code> / <code>OPENAI_API_KEY</code>。
+                </td>
+                <td>
+                  <code>claude-openai.ts</code> +
+                  <code>adapter/normalize.ts</code> 把内部消息转成 OpenAI
+                  chat/completions 形态；并行 <code>tool_calls</code> 按
+                  stream index 组装。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="relay">Relay 与 /model 菜单</h2>
+        <p>
+          <code>wtcc-zh.sh</code> 默认把 OpenAI 基址设为
+          <code>https://convertmodel.net</code>，Anthropic 基址设为
+          <code>https://convertmodel.net/anthropic</code>。这是启动脚本里的默认
+          relay 举例，不是「只支持这一家」的硬编码产品声明。
+        </p>
+        <p>
+          当 <code>CLAUDE_CODE_USE_OPENAI</code> 为真，<code>fetchRelayModels()</code>
+          会请求 <code>{OPENAI_BASE_URL}/v1/models</code>，过滤掉 dated snapshot、preview /
+          realtime / audio、<code>gpt-3.5</code>、<code>gpt-image-*</code> 等，再写入
+          <code>/model</code> 缓存。未开 OpenAI 路径时，这段探测是 no-op，菜单仍走上游
+          Anthropic bootstrap。
+        </p>
+        <p>
+          <code>/diagnose-relay</code> 打印当前 env flag 与 key 掩码，并对
+          OpenAI base 做一次 <code>GET /v1/models</code>（8 秒超时）。它不调用
+          <code>/chat/completions</code>，因此不是一次付费对话探测。
+        </p>
+
+        <h2 id="ids">Model id：不维护支持清单</h2>
+        <p>
+          <code>MODEL_REGISTRY</code> 为空。注释写明：用户传入的 id（例如
+          <code>gpt-5.5</code>、<code>gemini-3</code>、<code>kimi-k2-thinking</code>、<code>deepseek-v4-pro</code>、<code>glm-4.6</code>、<code>MiniMax-M1</code>、<code>qwen-max-latest</code>）一律放行；能不能用由
+          relay / API 在请求时决定。
+        </p>
+        <p><code>inferProvider</code> 的规则只有一条分叉：</p>
+        <ul class="plain">
+          <li>id 匹配 <code>/^claude-/i</code> → <code>anthropic</code></li>
+          <li>其余全部 → <code>openai</code></li>
+        </ul>
+        <p>
+          因此 Gemini / DeepSeek / Kimi / GLM / Qwen / MiniMax 在本仓库里都被当成
+          OpenAI 兼容 id 做上下文窗口、vision、effort、价格的<strong>模式推断</strong>，供
+          <code>/cost</code> 与菜单描述使用。推断错了不会在发请求前拦截。
+        </p>
+
+        <h2 id="pricing">计价表覆盖的家族</h2>
+        <p>
+          <code>src/routing/pricing.ts</code> 为下列家族写了公开标价近似值（注释写明
+          2026 年公开页、球公园数字），供 relay 路径的 cost-tracker 使用：
+        </p>
+        <ul class="plain">
+          <li>OpenAI GPT-5 / o-series / GPT-4.x</li>
+          <li>Anthropic Claude</li>
+          <li>Google Gemini 若干 id</li>
+          <li>DeepSeek、Moonshot / Kimi、Z.AI GLM、Alibaba Qwen、MiniMax</li>
+        </ul>
+        <p>
+          未知 id 回退到更粗的模式价。Anthropic 原生平走
+          <code>utils/modelCost.ts</code> 的 <code>MODEL_COSTS</code>（含 cache
+          价）。这不是「这些厂商都已签约认证」的证明。
+        </p>
+
+        <h2 id="adapter">OpenAI adapter 自愈范围</h2>
+        <p>
+          <code>patchOrphanToolCalls</code> 会在历史被 compact 丢掉 tool
+          结果时，给未匹配的 <code>tool_call_id</code> 插入空的
+          <code>role:'tool'</code> 消息，避免 OpenAI 返回 “No tool output found”。
+          并行 <code>tool_calls</code> 按 stream 的
+          <code>delta.tool_calls[i].index</code> 组装。真实 token usage 从
+          OpenAI / Codex 完成事件回填（见
+          <code>claude-openai.ts</code> 与 <code>codex-fetch-adapter.ts</code>）。
+        </p>
+
+        <h2 id="not-supported">源码里明确未实现的登录</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>方式</th>
+                <th>状态（TODO.md）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anthropic OAuth（<code>/login</code>）</td>
+                <td>已实现</td>
+              </tr>
+              <tr>
+                <td>OpenAI OAuth（Codex / ChatGPT 订阅登录）</td>
+                <td>未实现；全仓无 Codex OAuth 流程</td>
+              </tr>
+              <tr>
+                <td>ccswitch / cc-switch 登录</td>
+                <td>未实现；仓库无相关痕迹</td>
+              </tr>
+              <tr>
+                <td>UI 里粘贴 API key 并选择协议</td>
+                <td>半实现：只能靠 env / <code>wtcc-zh.sh</code>，没有 Ink 对话框</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          README 表格把 <code>/login</code> 写成「Anthropic / OpenAI」。以源码与
+          TODO 为准：<code>/login</code> 只接 Anthropic OAuth。
+        </p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p><a href="./">返回首页</a> · <a href="limitations.html">限制</a></p>
+        <p class="fine">https://unstoppablecurry.github.io/wtcc/</p>
+      </div>
+    </footer>
+    <script src="site.js" defer></script>
+  </body>
+</html>

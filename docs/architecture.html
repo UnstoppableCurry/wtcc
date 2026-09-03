@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>架构 — wtcc</title>
+    <meta
+      name="description"
+      content="wtcc 架构：Ink REPL、命令与工具注册表、QueryEngine、routing 推断、OpenAI adapter、i18n 与空操作 analytics。"
+    />
+    <link
+      rel="canonical"
+      href="https://unstoppablecurry.github.io/wtcc/architecture.html"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="架构 — wtcc" />
+    <meta
+      property="og:description"
+      content="从 CLAUDE.md 与源码目录归纳的终端 CLI 结构，不含未经验证的运行时拓扑。"
+    />
+    <meta
+      property="og:url"
+      content="https://unstoppablecurry.github.io/wtcc/architecture.html"
+    />
+    <meta
+      property="og:image"
+      content="https://unstoppablecurry.github.io/wtcc/assets/screenshot.png"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">wtcc <small>文档</small></a>
+        <button
+          class="nav-toggle"
+          type="button"
+          data-nav-toggle
+          aria-controls="site-nav"
+          aria-expanded="false"
+        >
+          菜单
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="站点">
+          <a href="./">目的</a>
+          <a href="compatibility.html">兼容性</a>
+          <a href="install.html">安装使用</a>
+          <a href="architecture.html" aria-current="page">架构</a>
+          <a href="limitations.html">限制</a>
+          <a class="ext" href="https://github.com/UnstoppableCurry/wtcc">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <p class="crumbs"><a href="./">文档</a> / 架构</p>
+        <h1>架构</h1>
+        <p class="lede">
+          这是进程内的 TypeScript CLI，不是多服务网页。下面按
+          <code>CLAUDE.md</code> 与目录职责描述；不画未在仓库出现的部署图。
+        </p>
+
+        <h2 id="loop">启动与 UI 循环</h2>
+        <ol class="plain">
+          <li>
+            用户执行 <code>wtcc</code> → Node shim 定位 Bun →
+            <code>bun run src/entrypoints/cli.tsx</code>。
+          </li>
+          <li>
+            CLI 引导进入 <code>src/screens/REPL.tsx</code>（Ink / React
+            终端界面）。
+          </li>
+          <li>
+            斜杠命令在 <code>src/commands.ts</code> 注册，实现放在
+            <code>src/commands/</code>。
+          </li>
+          <li>
+            工具在 <code>src/tools.ts</code> 注册，实现放在
+            <code>src/tools/</code>。
+          </li>
+          <li>
+            <code>src/QueryEngine.ts</code> 协调消息、tool use 与 model 调用。
+          </li>
+        </ol>
+
+        <h2 id="tree">源码子系统</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>目录</th>
+                <th>职责（CLAUDE.md）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/services/</code></td>
+                <td>API 客户端、OAuth、MCP；analytics 对外 API 为空操作</td>
+              </tr>
+              <tr>
+                <td><code>src/state/</code></td>
+                <td>应用状态</td>
+              </tr>
+              <tr>
+                <td><code>src/hooks/</code>、<code>src/components/</code></td>
+                <td>Ink 界面与 React hooks</td>
+              </tr>
+              <tr>
+                <td><code>src/skills/</code>、<code>src/plugins/</code></td>
+                <td>技能与插件</td>
+              </tr>
+              <tr>
+                <td><code>src/bridge/</code>、<code>src/voice/</code>、<code>src/tasks/</code></td>
+                <td>IDE 桥、语音、后台任务；语音等仍依赖上游开关与运行时条件</td>
+              </tr>
+              <tr>
+                <td><code>src/i18n/</code></td>
+                <td>locale 与 translator；<code>FREE_CODE_LANG</code> / <code>LANG</code></td>
+              </tr>
+              <tr>
+                <td><code>src/routing/</code></td>
+                <td>wtcc 增量：空 registry、启发式分档、router、pricing、decisionLog</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="routing">路由怎么决策</h2>
+        <p><code>selectModel</code>（<code>src/routing/router.ts</code>）：</p>
+        <ul class="plain">
+          <li>
+            有显式 model（<code>--model</code> / 菜单）时：<code>getModelInfo(id)</code>
+            做模式推断，来源记为 <code>override</code>，原因
+            <code>user override</code>。
+          </li>
+          <li>
+            自动路径：启发式选出 light / medium / heavy，再
+            <code>getByTier</code>。registry 为空，所以
+            <code>getByTier</code> 恒为 <code>undefined</code>，会抛
+            <code>RoutingError</code>，提示必须显式传
+            <code>--model</code>。
+          </li>
+        </ul>
+        <p>
+          注释写明：上游 <code>getDefaultModel()</code> 通常先填好
+          <code>override.model</code>，因此自动档在实践中很少走到抛错。
+          <code>/why-this-model</code> 只展示内存 ring buffer，不保证跨进程持久化。
+        </p>
+        <pre><code>src/routing/
+  registry.ts      # MODEL_REGISTRY = []；inferProvider / inferTier / context
+  heuristics.ts    # 信号 → 档位
+  router.ts        # override 优先，否则找 anchor
+  pricing.ts       # /cost 用的公开价表
+  decisionLog.ts   # /why-this-model
+  integration.ts   # 接到主循环</code></pre>
+
+        <h2 id="api">API 与 adapter</h2>
+        <ul class="plain">
+          <li><code>src/services/api/claude.ts</code> — Anthropic 消息 API</li>
+          <li><code>src/services/api/claude-openai.ts</code> — OpenAI 兼容流</li>
+          <li>
+            <code>src/services/api/adapter/normalize.ts</code> — 消息互转、孤儿
+            <code>tool_calls</code> 修补、effort 线上折叠
+          </li>
+          <li>
+            <code>src/services/api/codex-fetch-adapter.ts</code> — Codex
+            responses 形态（vision / tool_result / reasoning delta）
+          </li>
+          <li>
+            <code>src/services/api/relayModels.ts</code> —
+            <code>/v1/models</code> → <code>/model</code> 菜单
+          </li>
+        </ul>
+
+        <h2 id="i18n">i18n</h2>
+        <p>
+          <code>createTranslator</code> 先读当前 locale，缺 key 回退
+          <code>en-US</code>，再回退 key 本身。支持
+          <code>{{name}}</code> 插值。zh-CN 与 en-US 目前都是 378 个 key，集合一致。
+          CONTRIBUTING 要求技术词（token、model、MCP、命令名）不翻译。TODO
+          仍列出 REPL、Bash 选项、状态栏等未覆盖区域。
+        </p>
+
+        <h2 id="telemetry">Telemetry 边界</h2>
+        <p>
+          <code>src/services/analytics/index.ts</code> 写明：开源构建有意不发产品
+          telemetry，<code>logEvent</code> / <code>attachAnalyticsSink</code>
+          为空函数，好让旧调用点继续编译。
+        </p>
+        <p>
+          树里仍有 <code>growthbook.ts</code>、OTel 相关依赖与上游调用点。本站不把它写成「进程零出站」——只确认<strong>对外 analytics API 被做成空操作</strong>。GrowthBook
+          是否在某条实验路径上仍发起网络请求，需要针对具体 build flag 再测。
+        </p>
+
+        <h2 id="build-system">构建</h2>
+        <p>
+          <code>scripts/build.ts</code> 按 feature flag 打包。默认构建与
+          <code>build:dev:full</code> 打开的实验集合见
+          <code>FEATURES.md</code>。许多 flag 能编过但不保证运行时安全（缺原生模块、要
+          claude.ai OAuth、或外部 <code>@ant/*</code> 包）。
+        </p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p><a href="./">返回首页</a> · <a href="limitations.html">限制</a></p>
+        <p class="fine">https://unstoppablecurry.github.io/wtcc/</p>
+      </div>
+    </footer>
+    <script src="site.js" defer></script>
+  </body>
+</html>

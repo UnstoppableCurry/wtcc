@@ -8,6 +8,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/UnstoppableCurry/wtcc?style=social)](https://github.com/UnstoppableCurry/wtcc)
 [![Runtime: Bun](https://img.shields.io/badge/runtime-bun-orange)](https://bun.sh)
 
+**文档站（静态 GitHub Pages，中文）**：[https://unstoppablecurry.github.io/wtcc/](https://unstoppablecurry.github.io/wtcc/) — 目的、provider 兼容边界、安装与使用、架构、限制。这是终端 Ink CLI 的说明页，不是浏览器版 wtcc。
+
 `wtcc`（"WT Claude Code" 的缩写）是 **更强的 Claude Code 开源构建** —— 基于公开可见的 Claude Code 源码深度增强，专攻中文用户和多 provider 场景。一句话定位：**一个 CLI 同时讲中文、同时调 Claude / GPT / Gemini / DeepSeek / Kimi / GLM / Qwen，并按 model 能力自动路由。**
 
 > 关键词（SEO）：Claude Code 中文版 · Claude Code Chinese · multi-provider AI CLI · OpenAI Anthropic relay CLI · self-hosted Claude Code · 自建 Claude Code · AI coding assistant 中文。
@@ -243,6 +245,6 @@ ISC. 上游 Claude Code 源码版权属于 Anthropic；本 fork 只使用通过 
 - A self-healing OpenAI adapter (orphan tool_calls, parallel tool_calls, real token usage)
 - Dynamic `/model` menu and per-model `/effort` schemas
 
-Install with `npm install -g @unstoppablecurry/wtcc` (requires Bun ≥ 1.3 on PATH). For self-hosted Claude Code workflows behind an OpenAI-protocol relay, set `WTCC_RELAY_KEY` and run `./wtcc-zh.sh`. Full docs above in Chinese; commands and env vars are language-agnostic.
+Install with `npm install -g @unstoppablecurry/wtcc` (requires Bun ≥ 1.3 on PATH). For self-hosted Claude Code workflows behind an OpenAI-protocol relay, set `WTCC_RELAY_KEY` and run `./wtcc-zh.sh`. Full docs above in Chinese; commands and env vars are language-agnostic. Static documentation site: [https://unstoppablecurry.github.io/wtcc/](https://unstoppablecurry.github.io/wtcc/).
 
 PRs welcome at [github.com/UnstoppableCurry/wtcc](https://github.com/UnstoppableCurry/wtcc).

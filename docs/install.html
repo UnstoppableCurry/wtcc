@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>安装与使用 — wtcc</title>
+    <meta
+      name="description"
+      content="安装 wtcc：先装 Bun，再 npm 或 bun 全局安装 @unstoppablecurry/wtcc，或从源码 bun run build。给出鉴权、斜杠命令与环境变量的源码级说明。"
+    />
+    <link
+      rel="canonical"
+      href="https://unstoppablecurry.github.io/wtcc/install.html"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="安装与使用 — wtcc" />
+    <meta
+      property="og:description"
+      content="Bun 运行时、npm shim、三种鉴权路径与已登记斜杠命令。"
+    />
+    <meta
+      property="og:url"
+      content="https://unstoppablecurry.github.io/wtcc/install.html"
+    />
+    <meta
+      property="og:image"
+      content="https://unstoppablecurry.github.io/wtcc/assets/screenshot.png"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">wtcc <small>文档</small></a>
+        <button
+          class="nav-toggle"
+          type="button"
+          data-nav-toggle
+          aria-controls="site-nav"
+          aria-expanded="false"
+        >
+          菜单
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="站点">
+          <a href="./">目的</a>
+          <a href="compatibility.html">兼容性</a>
+          <a href="install.html" aria-current="page">安装使用</a>
+          <a href="architecture.html">架构</a>
+          <a href="limitations.html">限制</a>
+          <a class="ext" href="https://github.com/UnstoppableCurry/wtcc">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap">
+        <p class="crumbs"><a href="./">文档</a> / 安装使用</p>
+        <h1>安装与使用</h1>
+        <p class="lede">
+          这是终端程序。安装后在 shell 里运行 <code>wtcc</code>，不会出现网页版
+          REPL。CONTRIBUTING 写明开发环境按 macOS / Linux / WSL2 验证，原生
+          Windows 未测试。
+        </p>
+
+        <h2 id="prereq">前置：Bun</h2>
+        <p>
+          <code>package.json</code> 要求 <code>bun &gt;= 1.3</code>、<code>node &gt;= 20</code>。
+          npm 全局包提供的是 Node shim（<code>bin/wtcc.cjs</code>），shim 找到
+          <code>bun</code> 后再 <code>bun run src/entrypoints/cli.tsx</code>。没有
+          Bun 会退出并打印安装提示。
+        </p>
+        <pre><code>curl -fsSL https://bun.sh/install | bash</code></pre>
+        <p>Windows PowerShell（README）：</p>
+        <pre><code>powershell -c "irm bun.sh/install.ps1 | iex"</code></pre>
+
+        <h2 id="install">安装方式</h2>
+        <h3>npm 全局（README 主推）</h3>
+        <pre><code>npm install -g @unstoppablecurry/wtcc
+wtcc --help
+wtcc --version</code></pre>
+        <p>
+          若提示 <code>command not found</code>，把 <code>npm bin -g</code> 或
+          <code>~/.bun/bin</code> 加进 <code>PATH</code>。
+        </p>
+        <h3>bun 全局</h3>
+        <pre><code>bun add -g @unstoppablecurry/wtcc</code></pre>
+        <h3>从源码</h3>
+        <pre><code>git clone https://github.com/UnstoppableCurry/wtcc.git
+cd wtcc
+bun install
+bun run build      # 产出 ./cli
+./wtcc-zh.sh       # 中文 + 默认 relay 环境</code></pre>
+        <div class="note note-warn">
+          <p>
+            不要用仓库根目录的 <code>install.sh</code> 当官方安装器：它仍克隆
+            <code>paoloanzn/free-code</code> 并链接 <code>free-code</code>
+            命令，是上游残留。
+          </p>
+        </div>
+
+        <h2 id="auth">鉴权（按 README 优先级）</h2>
+        <h3>1. Anthropic OAuth</h3>
+        <pre><code>wtcc /login</code></pre>
+        <p>浏览器走 Anthropic 账户；token 写入 <code>~/.claude/</code>。</p>
+        <h3>2. Relay key</h3>
+        <pre><code>export WTCC_RELAY_KEY="sk-relay-xxxxxxxx"
+./wtcc-zh.sh</code></pre>
+        <p>等价的手动导出（README）：</p>
+        <pre><code>export FREE_CODE_MULTI_PROVIDER_NORMALIZED=1
+export CLAUDE_CODE_USE_OPENAI=1
+export OPENAI_BASE_URL="https://convertmodel.net"
+export OPENAI_API_KEY="sk-relay-xxxxxxxx"
+wtcc --model gpt-5.5</code></pre>
+        <p>
+          <code>wtcc-zh.sh</code> 读 key 的顺序：<code>WTCC_RELAY_KEY</code> →
+          <code>FREE_CODE_RELAY_KEY</code> → <code>OPENAI_API_KEY</code> →
+          <code>ANTHROPIC_AUTH_TOKEN</code>。缺 key 会直接退出。脚本还会
+          <code>exec bun run ./src/entrypoints/cli.tsx --dangerously-skip-permissions</code>。
+        </p>
+        <h3>3. 原生 Anthropic API key</h3>
+        <pre><code>unset CLAUDE_CODE_USE_OPENAI
+unset OPENAI_BASE_URL
+export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
+wtcc --model claude-opus-4-7</code></pre>
+
+        <h2 id="examples">使用例子</h2>
+        <pre><code># 交互 REPL（中文）
+FREE_CODE_LANG=zh-CN wtcc
+
+# 源码开发
+bun run dev
+
+# 单次提问（wtcc-zh.sh 支持 -p）
+./wtcc-zh.sh -p "列出当前目录的 TypeScript 入口"
+
+# 解释最近一次路由
+# 在 REPL 输入：
+# /why-this-model
+
+# 探测 relay（只 GET /v1/models）
+# /diagnose-relay</code></pre>
+
+        <h2 id="commands">本仓库强调的斜杠命令</h2>
+        <p>
+          上游 Claude Code 还有大量命令登记在
+          <code>src/commands.ts</code>。下表只列 README 与 wtcc
+          增量实现能对上的部分。
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>命令</th>
+                <th>证据中的行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/model</code></td>
+                <td>Ink model 菜单；OpenAI 路径下合并 relay <code>/v1/models</code></td>
+              </tr>
+              <tr>
+                <td><code>/effort</code></td>
+                <td>
+                  <code>low|medium|high|max|xhigh|auto</code>；按 model
+                  过滤档位；<code>CLAUDE_CODE_EFFORT_LEVEL</code> 优先
+                </td>
+              </tr>
+              <tr>
+                <td><code>/why-this-model</code></td>
+                <td>读内存里的路由决策环（<code>routing/decisionLog.ts</code>）</td>
+              </tr>
+              <tr>
+                <td><code>/diagnose-relay</code></td>
+                <td>打印 flag / 掩码 key，并探测 OpenAI <code>/v1/models</code></td>
+              </tr>
+              <tr>
+                <td><code>/update</code></td>
+                <td>
+                  只读查 npm registry（24h 磁盘缓存）。源码打印的升级命令是
+                  <code>npm i -g wtcc</code>，与 scoped 包名不一致；实际安装请用
+                  <code>@unstoppablecurry/wtcc</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>/cost</code></td>
+                <td>当前会话花费；relay 走 <code>routing/pricing.ts</code></td>
+              </tr>
+              <tr>
+                <td><code>/login</code></td>
+                <td>Anthropic OAuth，不是 OpenAI OAuth</td>
+              </tr>
+              <tr>
+                <td><code>/version</code> <code>/help</code></td>
+                <td>版本与命令列表</td>
+              </tr>
+              <tr>
+                <td><code>/curry</code></td>
+                <td>wtcc 专属 drawille 动画命令</td>
+              </tr>
+              <tr>
+                <td><code>/upgrade</code></td>
+                <td>上游 Anthropic Max 套餐流程，不升级 wtcc 本身</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="env">环境变量</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>变量</th>
+                <th>作用（README / 脚本）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>ANTHROPIC_API_KEY</code> / <code>ANTHROPIC_AUTH_TOKEN</code></td>
+                <td>Anthropic 凭证；后者给 relay Bearer</td>
+              </tr>
+              <tr>
+                <td><code>ANTHROPIC_BASE_URL</code> / <code>ANTHROPIC_MODEL</code></td>
+                <td>覆盖 Anthropic 端点与默认 model</td>
+              </tr>
+              <tr>
+                <td><code>OPENAI_API_KEY</code> / <code>OPENAI_BASE_URL</code></td>
+                <td>OpenAI 或兼容 relay</td>
+              </tr>
+              <tr>
+                <td><code>CLAUDE_CODE_USE_OPENAI=1</code></td>
+                <td>走 OpenAI 协议路径</td>
+              </tr>
+              <tr>
+                <td><code>FREE_CODE_MULTI_PROVIDER_NORMALIZED=1</code></td>
+                <td>开启 normalised 多 provider 路由</td>
+              </tr>
+              <tr>
+                <td><code>FREE_CODE_LANG</code></td>
+                <td><code>zh-CN</code> / <code>en-US</code>；未设则看 <code>LANG</code></td>
+              </tr>
+              <tr>
+                <td><code>WTCC_RELAY_KEY</code></td>
+                <td><code>wtcc-zh.sh</code> 读取的 relay 凭据</td>
+              </tr>
+              <tr>
+                <td><code>WTCC_OPENAI_FAST=1</code></td>
+                <td>提示 Codex 请求带 <code>service_tier: "fast"</code>（TODO：未在真 ChatGPT 订阅上验证）</td>
+              </tr>
+              <tr>
+                <td><code>CLAUDE_CODE_EFFORT_LEVEL</code></td>
+                <td>默认 effort，覆盖会话设置</td>
+              </tr>
+              <tr>
+                <td><code>DISABLE_AUTOUPDATER=1</code></td>
+                <td>关闭上游 auto-updater</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="fine">
+          <code>FREE_CODE_*</code> 是历史命名空间，为兼容保留。
+        </p>
+
+        <h2 id="build">从源码构建</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>命令</th>
+                <th>输出</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>bun run build</code></td>
+                <td><code>./cli</code> 生产构建</td>
+              </tr>
+              <tr>
+                <td><code>bun run build:dev</code></td>
+                <td><code>./cli-dev</code>，带 dev 时间戳</td>
+              </tr>
+              <tr>
+                <td><code>bun run build:dev:full</code></td>
+                <td><code>./cli-dev</code>，打开当前实验 feature 集合</td>
+              </tr>
+              <tr>
+                <td><code>bun run compile</code></td>
+                <td><code>./dist/cli</code>；TODO 记录 <code>bun --compile</code> 在 Azure 动态 import 上会坏</td>
+              </tr>
+              <tr>
+                <td><code>bun run dev</code></td>
+                <td>直接跑 TypeScript 入口</td>
+              </tr>
+              <tr>
+                <td><code>bun test tests/</code></td>
+                <td>现有测试</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p><a href="./">返回首页</a> · <a href="architecture.html">架构</a></p>
+        <p class="fine">https://unstoppablecurry.github.io/wtcc/</p>
+      </div>
+    </footer>
+    <script src="site.js" defer></script>
+  </body>
+</html>

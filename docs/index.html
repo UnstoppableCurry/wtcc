@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wtcc — 终端 Ink CLI 文档</title>
+    <meta
+      name="description"
+      content="wtcc 是终端里的 Ink CLI，不是浏览器应用。基于公开可见的 Claude Code 源码，提供中文界面、Anthropic / OpenAI 兼容协议路径，以及按 model id 推断的路由与计费。"
+    />
+    <link rel="canonical" href="https://unstoppablecurry.github.io/wtcc/" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#0b0f14" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="wtcc — 终端 Ink CLI 文档" />
+    <meta
+      property="og:description"
+      content="中文优先的终端 AI coding CLI。本站只陈述 README 与源码可核验的事实。"
+    />
+    <meta property="og:url" content="https://unstoppablecurry.github.io/wtcc/" />
+    <meta
+      property="og:image"
+      content="https://unstoppablecurry.github.io/wtcc/assets/screenshot.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "wtcc",
+        "description": "Ink terminal CLI with zh-CN i18n and Anthropic / OpenAI-compatible provider paths.",
+        "url": "https://unstoppablecurry.github.io/wtcc/",
+        "codeRepository": "https://github.com/UnstoppableCurry/wtcc",
+        "programmingLanguage": ["TypeScript", "React"],
+        "runtimePlatform": "Bun",
+        "license": "https://github.com/UnstoppableCurry/wtcc/blob/main/LICENSE",
+        "inLanguage": "zh-CN"
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./">wtcc <small>文档</small></a>
+        <button
+          class="nav-toggle"
+          type="button"
+          data-nav-toggle
+          aria-controls="site-nav"
+          aria-expanded="false"
+        >
+          菜单
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="站点">
+          <a href="./" aria-current="page">目的</a>
+          <a href="compatibility.html">兼容性</a>
+          <a href="install.html">安装使用</a>
+          <a href="architecture.html">架构</a>
+          <a href="limitations.html">限制</a>
+          <a class="ext" href="https://github.com/UnstoppableCurry/wtcc">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <div class="wrap hero">
+        <p class="kicker">终端 CLI · 不是浏览器应用</p>
+        <h1>wtcc：中文界面的 Claude Code 开源构建</h1>
+        <p class="lede">
+          <code>wtcc</code>（WT Claude Code）跑在终端里，用 Ink / React 画 TUI。
+          它在公开可见的 Claude Code 源码上增加中文 i18n、Anthropic 与 OpenAI
+          兼容协议路径，以及按 model id 做的能力推断与 <code>/cost</code> 计价。
+          本站只写仓库 README、源码和
+          <code>assets/screenshot.png</code> 能核验的内容。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="install.html">安装与使用</a>
+          <a class="btn btn-ghost" href="compatibility.html">看 provider 边界</a>
+          <a class="btn btn-ghost" href="https://www.npmjs.com/package/@unstoppablecurry/wtcc"
+            >npm 包</a
+          >
+        </div>
+      </div>
+
+      <div class="wrap">
+        <figure class="shot">
+          <img
+            src="assets/screenshot.png"
+            width="1728"
+            height="1470"
+            alt="macOS 终端里的 Ink TUI：上方是 bun 构建 cli-dev 的日志，下方是带边框的欢迎面板与 Launch ultraplan 选项。窗口标题显示 Free Code / Claude Code，不是当前 wtcc 中文欢迎屏。"
+          />
+          <figcaption class="caption">
+            仓库已验证截图 <code>assets/screenshot.png</code>。这是 Ink
+            终端界面的 <code>cli-dev</code> 构建画面：标题栏与 banner 仍带上游
+            Free Code / Claude Code 痕迹，并出现英文欢迎语与 ultraplan
+            对话框。它证明本项目是终端 TUI，<strong>不是</strong>浏览器产品截图，也
+            <strong>不是</strong>当前 wtcc 中文欢迎屏。
+          </figcaption>
+        </figure>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">本站目录</h2>
+          <ol>
+            <li><a href="./">目的</a>：项目是什么、不是什么</li>
+            <li>
+              <a href="compatibility.html">兼容性</a>：协议路径与 model id 推断
+            </li>
+            <li><a href="install.html">安装使用</a>：Bun、npm、鉴权与命令</li>
+            <li><a href="architecture.html">架构</a>：入口、路由、adapter、i18n</li>
+            <li><a href="limitations.html">限制</a>：未实现项与证据边界</li>
+          </ol>
+        </nav>
+
+        <h2 id="purpose">它解决什么</h2>
+        <div class="grid-2">
+          <article class="card">
+            <h3>中文终端界面</h3>
+            <p>
+              locale 文件 <code>zh-CN</code> / <code>en-US</code> 各 378 个
+              key。用 <code>FREE_CODE_LANG=zh-CN</code> 或
+              <code>./wtcc-zh.sh</code> 切到中文。命令名、env、model id
+              保持英文。REPL 主屏仍有未翻译的英文字面量。
+            </p>
+          </article>
+          <article class="card">
+            <h3>两条协议路径</h3>
+            <p>
+              源码把 provider 收成 <code>anthropic</code> 与
+              <code>openai</code>。后者走 OpenAI 兼容 HTTP（含 relay 的
+              <code>OPENAI_BASE_URL</code>）。没有独立的 Gemini / DeepSeek
+              官方 SDK。
+            </p>
+          </article>
+          <article class="card">
+            <h3>动态 model 菜单</h3>
+            <p>
+              打开 <code>CLAUDE_CODE_USE_OPENAI=1</code> 时，会 GET relay 的
+              <code>/v1/models</code>，把返回的 id 填进
+              <code>/model</code>。内部 registry 刻意留空，不维护「支持清单」。
+            </p>
+          </article>
+          <article class="card">
+            <h3>按 model 的 effort</h3>
+            <p>
+              <code>/effort</code> 按 model id 露出不同档位。
+              <code>opus-4-7</code> 含 <code>xhigh</code>（32k thinking
+              budget）；其它家族更少。OpenAI 线上把
+              <code>max</code> / <code>xhigh</code> 收成 <code>high</code>。
+            </p>
+          </article>
+        </div>
+
+        <h2 id="not-claims">本站不声称</h2>
+        <div class="note note-warn">
+          <p>
+            不写用户数、星标意义、性能数字、市场份额或「生产就绪」口号。不把
+            README 里的 GPT / Gemini / DeepSeek / Kimi / GLM / Qwen
+            写成官方直连。不把截图里的 Free Code banner 说成当前 wtcc
+            品牌界面。上游实验 feature flag、未完成登录方式和 Windows
+            原生支持见 <a href="limitations.html">限制</a>。
+          </p>
+        </div>
+
+        <h2 id="facts">可核验事实</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>项</th>
+                <th>来源</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>npm 包 <code>@unstoppablecurry/wtcc</code>，当前 package.json 版本 0.1.7</td>
+                <td><code>package.json</code></td>
+              </tr>
+              <tr>
+                <td>需要 Bun（engines：<code>bun &gt;= 1.3</code>，Node shim 再 exec bun）</td>
+                <td><code>package.json</code>、<code>bin/wtcc.cjs</code></td>
+              </tr>
+              <tr>
+                <td>入口 <code>src/entrypoints/cli.tsx</code>，交互界面 <code>src/screens/REPL.tsx</code></td>
+                <td><code>CLAUDE.md</code></td>
+              </tr>
+              <tr>
+                <td>对外 analytics <code>logEvent</code> 为空操作</td>
+                <td><code>src/services/analytics/index.ts</code></td>
+              </tr>
+              <tr>
+                <td>许可证 ISC；上游 Claude Code 版权仍属 Anthropic</td>
+                <td><code>LICENSE</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="fine" lang="en">
+          English: wtcc is an Ink terminal CLI, not a web app. Chinese is the
+          primary UI locale. Provider support is Anthropic plus OpenAI-compatible
+          HTTP, not first-party SDKs for every model family named in pricing
+          heuristics.
+        </p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p>
+          静态文档 · 预定地址
+          <a href="https://unstoppablecurry.github.io/wtcc/"
+            >https://unstoppablecurry.github.io/wtcc/</a
+          >
+        </p>
+        <p class="fine">
+          源码
+          <a href="https://github.com/UnstoppableCurry/wtcc">UnstoppableCurry/wtcc</a>
+          ·
+          <a href="https://github.com/UnstoppableCurry/wtcc/blob/main/LICENSE">ISC</a>
+          · 本页不统计访问、不嵌入分析脚本
+        </p>
+      </div>
+    </footer>
+    <script src="site.js" defer></script>
+  </body>
+</html>
